@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: order-db-deployment-10
+  name: order-db-deployment-w10
   labels:
     app: order-db
 spec:

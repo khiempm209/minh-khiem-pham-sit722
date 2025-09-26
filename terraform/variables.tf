@@ -9,7 +9,7 @@ variable "resoure_group_name" {
 }
 variable "kubernetes_cluster_name" {
   type    = string
-  default = "sit722pmk_staging"
+  default = "sit722pmkstaging"
 }
 variable "kuberets_cluster_node_pool_name" {
   type    = string
