@@ -115,7 +115,6 @@ jobs:
           cat frontend/main.js
           echo "---------------------------------"
       
-        # Login to Azure Container Registry (ACR)
       - name: Login to Azure Container Registry
         run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
@@ -129,6 +128,42 @@ jobs:
           echo "Deploying the frontend microservice..."
           cd k8s
           kubectl apply -f frontend.yaml
+        
+      - name: Wait for the Frontend LoadBalancer IP
+        run: |
+          echo "Waiting for Frontend API to be assigned (up to 5 minutes)..."
+          FRONTEND_IP=""
+          
+          for i in $(seq 1 60); do
+            echo "Attempt $i/60 to get the IP..."
+            FRONTEND_IP=$(kubectl get service frontend-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+            if [[ -n "$FRONTEND_IP" ]]; then
+              echo "Frontend Service IP: $FRONTEND_IP"
+              break
+            fi
+            sleep 5 # Wait 5 seconds before next attempt
+          done
+          
+          if [[ -z "$FRONTEND_IP" ]]; then
+            echo "Error: FRONTEND IP not assigned after timeout."
+            exit 1 # Fail the job if IPs are not obtained
+          fi
+          
+          # These are environment variables for subsequent steps in the *same job*
+          # And used to set the job outputs
+          echo "FRONTEND_IP=$FRONTEND_IP" >> $GITHUB_ENV
+      
+      - name: Inject the Frontend IP into the selinium_test.py
+        run: |
+          echo "Injecting the Frontend IP into test/selinium_test.py"
+          echo "${{ env.FRONTEND_IP }}"
+          sed -i "s|_FRONTEND_API_|${{ env.FRONTEND_IP }}|g" test/selinium_test.py
+          
+          # Display the modified file content for debugging
+          echo "--- Modified selinium_test.py content ---"
+          cat test/selinium_test.py
+          echo "---------------------------------"
       
       - name: Simple acceptance test
         run: |

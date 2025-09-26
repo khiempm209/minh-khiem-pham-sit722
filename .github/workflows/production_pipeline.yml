@@ -1,5 +1,3 @@
-# week08/.github/workflows/frontend-cd.yml
-
 name: Production pipeline - Deploy Application to the production infrastructure
 
 on:

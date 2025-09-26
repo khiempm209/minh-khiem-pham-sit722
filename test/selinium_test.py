@@ -5,8 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-BASE_URL = "http://4.200.140.69/"
-# BASE_URL = "http://_FRONTEND_API_"
+BASE_URL = "http://_FRONTEND_API_"
 
 @pytest.fixture(scope="module")
 def driver():
