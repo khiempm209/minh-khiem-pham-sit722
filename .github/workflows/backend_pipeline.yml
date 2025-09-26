@@ -15,7 +15,7 @@ env:
 
 jobs:
   test_and_lint_backends:
-    runs-on: ubuntu-latest # Use a GitHub-hosted runner
+    runs-on: ubuntu-latest
 
     services:
 
