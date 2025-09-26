@@ -38,104 +38,109 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           # enable-AzPSSession: true
       
-      - name: Terraform Init/PLan/Apply - Initialize the Staging AKS
-        run: |
-          cd terraform
-          terraform init -input=false
-          terraform plan -input=false -no-color
-          terraform apply -auto-approve
+      # - name: Terraform Init/PLan/Apply - Initialize the Staging AKS
+      #   run: |
+      #     cd terraform
+      #     terraform init -input=false
+      #     terraform plan -input=false -no-color
+      #     terraform apply -auto-approve
 
-      - name: Set Kubernetes context (get AKS credentials)
-        run: |
-          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name sit722pmkstaging --overwrite-existing
+      # - name: Set Kubernetes context (get AKS credentials)
+      #   run: |
+      #     az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name sit722pmkstaging --overwrite-existing
 
-      - name: Attach ACR
-        run: |
-          az aks update --name sit722pmkstaging --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}
+      # - name: Attach ACR
+      #   run: |
+      #     az aks update --name sit722pmkstaging --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY_NAME }}
 
-      - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
-        run: |
-          echo "Deploying backend infrastructure..."
-          cd k8s/
-          kubectl apply -f configmaps.yaml
-          kubectl apply -f secrets.yaml
-          kubectl apply -f product-db.yaml
-          kubectl apply -f order-db.yaml
-          kubectl apply -f customer-db.yaml
+      # - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
+      #   run: |
+      #     echo "Deploying backend infrastructure..."
+      #     cd k8s/
+      #     kubectl apply -f configmaps.yaml
+      #     kubectl apply -f secrets.yaml
+      #     kubectl apply -f product-db.yaml
+      #     kubectl apply -f order-db.yaml
+      #     kubectl apply -f customer-db.yaml
 
-      - name: Deploy Backend Microservices (Product, Order, Customer)
-        run: |
-          echo "Deploying backend microservices..."
-          cd k8s/
-          kubectl apply -f product-service.yaml
-          kubectl apply -f order-service.yaml
-          kubectl apply -f customer-service.yaml
+      # - name: Deploy Backend Microservices (Product, Order, Customer)
+      #   run: |
+      #     echo "Deploying backend microservices..."
+      #     cd k8s/
+      #     kubectl apply -f product-service.yaml
+      #     kubectl apply -f order-service.yaml
+      #     kubectl apply -f customer-service.yaml
       
-      - name: Wait for Backend LoadBalancer IPs
-        run: |
-          echo "Waiting for Product, Order, Customer LoadBalancer IPs to be assigned (up to 5 minutes)..."
-          PRODUCT_IP=""
-          ORDER_IP=""
-          CUSTOMER_IP=""
+      # - name: Wait for Backend LoadBalancer IPs
+      #   run: |
+      #     echo "Waiting for Product, Order, Customer LoadBalancer IPs to be assigned (up to 5 minutes)..."
+      #     PRODUCT_IP=""
+      #     ORDER_IP=""
+      #     CUSTOMER_IP=""
           
-          for i in $(seq 1 60); do
-            echo "Attempt $i/60 to get IPs..."
-            PRODUCT_IP=$(kubectl get service product-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            ORDER_IP=$(kubectl get service order-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            CUSTOMER_IP=$(kubectl get service customer-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+      #     for i in $(seq 1 60); do
+      #       echo "Attempt $i/60 to get IPs..."
+      #       PRODUCT_IP=$(kubectl get service product-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+      #       ORDER_IP=$(kubectl get service order-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+      #       CUSTOMER_IP=$(kubectl get service customer-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-            if [[ -n "$PRODUCT_IP" && -n "$ORDER_IP" && -n "$CUSTOMER_IP" ]]; then
-              echo "All backend LoadBalancer IPs assigned!"
-              echo "Product Service IP: $PRODUCT_IP"
-              echo "Order Service IP: $ORDER_IP"
-              echo "Customer Service IP: $CUSTOMER_IP"
-              break
-            fi
-            sleep 5 # Wait 5 seconds before next attempt
-          done
+      #       if [[ -n "$PRODUCT_IP" && -n "$ORDER_IP" && -n "$CUSTOMER_IP" ]]; then
+      #         echo "All backend LoadBalancer IPs assigned!"
+      #         echo "Product Service IP: $PRODUCT_IP"
+      #         echo "Order Service IP: $ORDER_IP"
+      #         echo "Customer Service IP: $CUSTOMER_IP"
+      #         break
+      #       fi
+      #       sleep 5 # Wait 5 seconds before next attempt
+      #     done
           
-          if [[ -z "$PRODUCT_IP" || -z "$ORDER_IP" || -z "$CUSTOMER_IP" ]]; then
-            echo "Error: One or more LoadBalancer IPs not assigned after timeout."
-            exit 1 # Fail the job if IPs are not obtained
-          fi
+      #     if [[ -z "$PRODUCT_IP" || -z "$ORDER_IP" || -z "$CUSTOMER_IP" ]]; then
+      #       echo "Error: One or more LoadBalancer IPs not assigned after timeout."
+      #       exit 1 # Fail the job if IPs are not obtained
+      #     fi
           
-          # These are environment variables for subsequent steps in the *same job*
-          # And used to set the job outputs
-          echo "PRODUCT_IP=http://$PRODUCT_IP:8000" >> $GITHUB_ENV
-          echo "ORDER_IP=http://$ORDER_IP:8001" >> $GITHUB_ENV
-          echo "CUSTOMER_IP=http://$CUSTOMER_IP:8002" >> $GITHUB_ENV
+      #     # These are environment variables for subsequent steps in the *same job*
+      #     # And used to set the job outputs
+      #     echo "PRODUCT_IP=http://$PRODUCT_IP:8000" >> $GITHUB_ENV
+      #     echo "ORDER_IP=http://$ORDER_IP:8001" >> $GITHUB_ENV
+      #     echo "CUSTOMER_IP=http://$CUSTOMER_IP:8002" >> $GITHUB_ENV
 
-      - name: Inject Backend IPs into Frontend main.js
-        run: |
-          echo "Injecting IPs into frontend/static/js/main.js"
-          # Ensure frontend/main.js is directly in the path for sed
-          echo "${{ env.PRODUCT_IP }}"
-          echo "${{ env.ORDER_IP }}"
-          echo "${{ env.CUSTOMER_IP }}"
-          sed -i "s|_PRODUCT_API_URL_|${{ env.PRODUCT_IP }}|g" frontend/main.js
-          sed -i "s|_ORDER_API_URL_|${{ env.ORDER_IP }}|g" frontend/main.js
-          sed -i "s|_CUSTOMER_API_URL_|${{ env.CUSTOMER_IP }}|g" frontend/main.js
+      # - name: Inject Backend IPs into Frontend main.js
+      #   run: |
+      #     echo "Injecting IPs into frontend/static/js/main.js"
+      #     # Ensure frontend/main.js is directly in the path for sed
+      #     echo "${{ env.PRODUCT_IP }}"
+      #     echo "${{ env.ORDER_IP }}"
+      #     echo "${{ env.CUSTOMER_IP }}"
+      #     sed -i "s|_PRODUCT_API_URL_|${{ env.PRODUCT_IP }}|g" frontend/main.js
+      #     sed -i "s|_ORDER_API_URL_|${{ env.ORDER_IP }}|g" frontend/main.js
+      #     sed -i "s|_CUSTOMER_API_URL_|${{ env.CUSTOMER_IP }}|g" frontend/main.js
           
-          # Display the modified file content for debugging
-          echo "--- Modified main.js content ---"
-          cat frontend/main.js
-          echo "---------------------------------"
+      #     # Display the modified file content for debugging
+      #     echo "--- Modified main.js content ---"
+      #     cat frontend/main.js
+      #     echo "---------------------------------"
       
-        # Login to Azure Container Registry (ACR)
-      - name: Login to Azure Container Registry
-        run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+      #   # Login to Azure Container Registry (ACR)
+      # - name: Login to Azure Container Registry
+      #   run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
-      - name: Build and Push Frontend Image
-        run: |
-          docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_frontend:latest ./frontend/
-          docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_frontend:latest
+      # - name: Build and Push Frontend Image
+      #   run: |
+      #     docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_frontend:latest ./frontend/
+      #     docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_frontend:latest
         
-      - name: Deploy the Frontend Microservice
+      # - name: Deploy the Frontend Microservice
+      #   run: |
+      #     echo "Deploying the frontend microservice..."
+      #     cd k8s
+      #     kubectl apply -f frontend.yaml
+      
+      - name: Simple acceptance test
         run: |
-          echo "Deploying the frontend microservice..."
-          cd k8s
-          kubectl apply -f frontend.yaml
-
+          cd test
+          pip install -r requirements.text
+          pytest -q selinium_test.py
       # - name: Terraform Destroy - Destroy the Staging AKS
       #   run: |
       #     cd terraform
