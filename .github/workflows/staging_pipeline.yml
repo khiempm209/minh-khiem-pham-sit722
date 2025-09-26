@@ -81,7 +81,7 @@ jobs:
             ORDER_IP=$(kubectl get service order-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
             CUSTOMER_IP=$(kubectl get service customer-service-w10 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-            if [[ -n "$PRODUCT_IP" && -n "$ORDER_IP" && -n "$CUSTOMER_IP"]]; then
+            if [[ -n "$PRODUCT_IP" && -n "$ORDER_IP" && -n "$CUSTOMER_IP" ]]; then
               echo "All backend LoadBalancer IPs assigned!"
               echo "Product Service IP: $PRODUCT_IP"
               echo "Order Service IP: $ORDER_IP"
@@ -91,7 +91,7 @@ jobs:
             sleep 5 # Wait 5 seconds before next attempt
           done
           
-          if [[ -z "$PRODUCT_IP" || -z "$ORDER_IP" || -z "$CUSTOMER_IP"]]; then
+          if [[ -z "$PRODUCT_IP" || -z "$ORDER_IP" || -z "$CUSTOMER_IP" ]]; then
             echo "Error: One or more LoadBalancer IPs not assigned after timeout."
             exit 1 # Fail the job if IPs are not obtained
           fi
@@ -127,7 +127,9 @@ jobs:
         run: |
           cd terraform
           terraform destroy -auto-approve
+        if: always()
       
 
       - name: Logout from Azure 
         run: az logout
+        if: always()
