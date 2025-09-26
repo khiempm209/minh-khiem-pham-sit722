@@ -9,7 +9,7 @@ on:
       - testing
     paths: # Only trigger if changes are in backend directories
       - 'backend/**'
-      - '.github/workflows/backend_ci.yml' # Trigger if this workflow file changes
+      - '.github/workflows/backend_pipeline.yml' # Trigger if this workflow file changes
   # pull_request:
   #   branches:
   #     - development
