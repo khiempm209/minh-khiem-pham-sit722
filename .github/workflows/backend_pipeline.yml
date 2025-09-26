@@ -148,25 +148,25 @@ jobs:
 
     # Login to Azure Container Registry (ACR)
     - name: Login to Azure Container Registry
-      run: az acr login --name ${{ env.ACR_LOGIN_SERVER }}
+      run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
     # Build and Push Docker image for Product Service
     - name: Build and Push Product Service Image
       run: |
-        docker build -t ${{ env.ACR_LOGIN_SERVER }}/week10_product_service:latest ./backend/product_service/
-        docker push ${{ env.ACR_LOGIN_SERVER }}/week10_product_service:latest
+        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_product_service:latest ./backend/product_service/
+        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_product_service:latest
 
     # Build and Push Docker image for Order Service
     - name: Build and Push Order Service Image
       run: |
-        docker build -t ${{ env.ACR_LOGIN_SERVER }}/week10_order_service:latest ./backend/order_service/
-        docker push ${{ env.ACR_LOGIN_SERVER }}/week10_order_service:latest
+        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_order_service:latest ./backend/order_service/
+        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_order_service:latest
     
     # Build and Push Docker image for Customer Service
     - name: Build and Push Customer Service Image
       run: |
-        docker build -t ${{ env.ACR_LOGIN_SERVER }}/week10_customer_service:latest ./backend/customer_service/
-        docker push ${{ env.ACR_LOGIN_SERVER }}/week10_customer_service:latest
+        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_customer_service:latest ./backend/customer_service/
+        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_customer_service:latest
 
     # Logout from Azure for security (runs even if image push fails)
     - name: Logout from Azure

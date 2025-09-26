@@ -120,8 +120,8 @@ jobs:
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/week10_frontend:latest ./frontend/
-          docker push ${{ env.ACR_LOGIN_SERVER }}/week10_frontend:latest
+          docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_frontend:latest ./frontend/
+          docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}/week10_frontend:latest
         
       - name: Deploy the Frontend Microservice
         run: |
