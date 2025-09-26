@@ -18,6 +18,8 @@ on:
   #     - 'backend/**'
   #     - '.github/workflows/backend_ci.yml'
 
+  #update
+
 # Define global environment variables that can be used across jobs
 env:
   ACR_LOGIN_SERVER: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
