@@ -60,7 +60,7 @@ jobs:
           kubectl apply -f order-db.yaml
           kubectl apply -f customer-db.yaml
 
-      - name: Deploy Backend Microservices (Product, Order)
+      - name: Deploy Backend Microservices (Product, Order, Customer)
         run: |
           echo "Deploying backend microservices..."
           cd k8s/
@@ -98,36 +98,42 @@ jobs:
           
           # These are environment variables for subsequent steps in the *same job*
           # And used to set the job outputs
-          echo "PRODUCT_IP=$PRODUCT_IP" >> $GITHUB_ENV
-          echo "ORDER_IP=$ORDER_IP" >> $GITHUB_ENV
-          echo "CUSTOMER_IP=$CUSTOMER_IP" >> $GITHUB_ENV
+          echo "PRODUCT_IP=http://$PRODUCT_IP:8000" >> $GITHUB_ENV
+          echo "ORDER_IP=http://$ORDER_IP:8001" >> $GITHUB_ENV
+          echo "CUSTOMER_IP=http://$CUSTOMER_IP:8002" >> $GITHUB_ENV
 
-      # - name: Capture Product Service IP for Workflow Output
-      #   id: get_product_ip
-      #   run: echo "external_ip=${{ env.PRODUCT_IP }}" >> $GITHUB_OUTPUT
-      
-      # - name: Capture Order Service IP for Workflow Output
-      #   id: get_order_ip
-      #   run: echo "external_ip=${{ env.ORDER_IP }}" >> $GITHUB_OUTPUT
-      
-      # - name: Create env file with product ip and order ip
-      #   run: |
-      #     # Make a env file
-      #     printf "PRODUCT_IP=%s\nORDER_IP=%s\n" "${{ env.PRODUCT_IP }}" "${{ env.ORDER_IP }}" > id_address_vars.env
-      #     cat id_address_vars.env
-
-      # - name: Upload artifact (env file)
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ip-services-artifact
-      #     path: id_address_vars.env
-      #     overwrite: true
-
-      - name: Terraform Destroy - Destroy the Staging AKS
+      - name: Inject Backend IPs into Frontend main.js
         run: |
-          cd terraform
-          terraform destroy -auto-approve
-        if: always()
+          echo "Injecting IPs into frontend/static/js/main.js"
+          # Ensure frontend/main.js is directly in the path for sed
+          echo "${{ env.PRODUCT_IP }}"
+          echo "${{ env.ORDER_IP }}"
+          echo "${{ env.CUSTOMER_IP }}"
+          sed -i "s|_PRODUCT_API_URL_|${{ env.PRODUCT_IP }}|g" frontend/main.js
+          sed -i "s|_ORDER_API_URL_|${{ env.ORDER_IP }}|g" frontend/main.js
+          sed -i "s|_CUSTOMER_API_URL_|${{ env.CUSTOMER_IP }}|g" frontend/main.js
+          
+          # Display the modified file content for debugging
+          echo "--- Modified main.js content ---"
+          cat frontend/main.js
+          echo "---------------------------------"
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ env.ACR_LOGIN_SERVER }}/week10_frontend:latest ./frontend/
+          docker push ${{ env.ACR_LOGIN_SERVER }}/week10_frontend:latest
+        
+      - name: Deploy the Frontend Microservice
+        run: |
+          echo "Deploying the frontend microservice..."
+          cd k8s
+          kubectl apply -f frontend.yaml
+
+      # - name: Terraform Destroy - Destroy the Staging AKS
+      #   run: |
+      #     cd terraform
+      #     terraform destroy -auto-approve
+      #   if: always()
       
 
       - name: Logout from Azure 
