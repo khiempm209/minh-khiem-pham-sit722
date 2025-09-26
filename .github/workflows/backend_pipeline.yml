@@ -9,7 +9,7 @@ on:
       - testing
     paths: # Only trigger if changes are in backend directories
       - 'backend/**'
-      - '.github/workflows/backend_ci.yml' # Trigger if this workflow file changes
+      - '.github/workflows/backend_pipeline.yml' # Trigger if this workflow file changes
   # pull_request:
   #   branches:
   #     - development
@@ -17,6 +17,8 @@ on:
   #   paths:
   #     - 'backend/**'
   #     - '.github/workflows/backend_ci.yml'
+
+  #update
 
 # Define global environment variables that can be used across jobs
 env:
@@ -123,7 +125,7 @@ jobs:
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5434
-          POSTGRES_DB: orders
+          POSTGRES_DB: customers
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         run: |
