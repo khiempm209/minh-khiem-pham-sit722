@@ -7,9 +7,9 @@ on:
   push:
     branches:
       - testing
-    paths: # Only trigger if changes are in backend directories
+    paths: 
       - 'backend/**'
-      - '.github/workflows/backend_pipeline.yml' # Trigger if this workflow file changes
+      - '.github/workflows/backend_pipeline.yml' 
   # pull_request:
   #   branches:
   #     - development
@@ -19,8 +19,6 @@ on:
   #     - '.github/workflows/backend_ci.yml'
 
   #update
-
-# Define global environment variables that can be used across jobs
 env:
   ACR_LOGIN_SERVER: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 

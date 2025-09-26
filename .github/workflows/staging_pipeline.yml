@@ -23,6 +23,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: testing
+          fetch-depth: 0
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -117,6 +120,10 @@ jobs:
           echo "--- Modified main.js content ---"
           cat frontend/main.js
           echo "---------------------------------"
+      
+        # Login to Azure Container Registry (ACR)
+      - name: Login to Azure Container Registry
+        run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
       - name: Build and Push Frontend Image
         run: |
