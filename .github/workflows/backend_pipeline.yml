@@ -62,7 +62,6 @@ jobs:
           - 5434:5432
 
     steps:
-      # 1. Checkout the repository code to the runner
       - name: Checkout repository
         uses: actions/checkout@v4 
 
