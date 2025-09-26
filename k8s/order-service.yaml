@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: order-service-container
-        image: sit722pmk/week10_order_service
+        image: sit722pmk.azurecr.io/week10_order_service
         imagePullPolicy: Always
         ports:
         - containerPort: 8001
